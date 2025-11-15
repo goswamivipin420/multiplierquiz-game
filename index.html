@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Battle - Multiplayer Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #06beb6 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-top: 30px;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 3em;
+            margin: 20px 0 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header p {
+            color: #e0f7ff;
+            font-size: 1.2em;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* Lobby Screen */
+        .lobby-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .lobby-title h2 {
+            font-size: 2.5em;
+            color: #333;
+            margin: 20px 0 10px;
+        }
+
+        .lobby-title p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .player-card {
+            background: linear-gradient(135deg, #e9d5ff 0%, #dbeafe 100%);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .player-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .player-card .avatar {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .player-card .name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .player-card .status {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .player-card .hint {
+            color: #7c3aed;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+
+        .start-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Playing Screen */
+        .current-player {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .current-player-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            background: linear-gradient(135deg, #e9d5ff 0%, #dbeafe 100%);
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: 2px solid #a78bfa;
+        }
+
+        .current-player-badge .avatar {
+            font-size: 2em;
+        }
+
+        .current-player-badge .info .label {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .current-player-badge .info .name {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .progress-bar-container {
+            margin-bottom: 30px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+
+        .timer {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .timer-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 30px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 50px;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .timer-badge.warning {
+            background: #fee2e2;
+            color: #dc2626;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .question {
+            text-align: center;
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .options {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .option-btn {
+            padding: 20px;
+            background: #f9fafb;
+            border: 2px solid #d1d5db;
+            border-radius: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: #f3e8ff;
+            border-color: #a78bfa;
+        }
+
+        .option-btn.correct {
+            background: #d1fae5;
+            border-color: #10b981;
+            color: #065f46;
+        }
+
+        .option-btn.wrong {
+            background: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+
+        .option-btn.disabled {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .scores {
+            background: linear-gradient(135deg, #faf5ff 0%, #eff6ff 100%);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .scores h4 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .score-card {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .score-card.active {
+            background: white;
+            border: 2px solid #a78bfa;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .score-card .avatar {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .score-card .name {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .score-card .score {
+            font-weight: bold;
+            color: #7c3aed;
+            font-size: 1.1em;
+        }
+
+        .score-card .playing-indicator {
+            font-size: 0.7em;
+            color: #7c3aed;
+            margin-top: 5px;
+        }
+
+        /* Results Screen */
+        .results-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .results-header h2 {
+            font-size: 3em;
+            color: #333;
+            margin: 20px 0 10px;
+        }
+
+        .results-header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .results-list {
+            margin-bottom: 40px;
+        }
+
+        .result-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 25px;
+            margin-bottom: 15px;
+            border-radius: 15px;
+        }
+
+        .result-card.first {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #fbbf24;
+        }
+
+        .result-card.second {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        }
+
+        .result-card.third {
+            background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+        }
+
+        .result-card .rank {
+            font-size: 2em;
+            font-weight: bold;
+            min-width: 50px;
+        }
+
+        .result-card.first .rank { color: #d97706; }
+        .result-card.second .rank { color: #6b7280; }
+        .result-card.third .rank { color: #ea580c; }
+
+        .result-card .avatar {
+            font-size: 2.5em;
+        }
+
+        .result-card .info {
+            flex: 1;
+        }
+
+        .result-card .info .name {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .result-card .info .badge {
+            font-size: 0.9em;
+            color: #d97706;
+        }
+
+        .result-card .score-result {
+            text-align: right;
+        }
+
+        .result-card .score-result .points {
+            font-size: 2em;
+            font-weight: bold;
+            color: #7c3aed;
+        }
+
+        .result-card .score-result .label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .play-again-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .play-again-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span>🏆</span>
+                Quiz Battle
+                <span>🏆</span>
+            </h1>
+            <p>Fast answers = Bigger rewards!</p>
+        </div>
+
+        <div class="game-card">
+            <!-- Lobby Screen -->
+            <div id="lobby" class="screen active">
+                <div class="lobby-title">
+                    <div style="font-size: 4em;">👥</div>
+                    <h2>Players Ready</h2>
+                    <p>Compete for the highest score!</p>
+                </div>
+
+                <div class="players-grid" id="playersGrid"></div>
+
+                <button class="start-btn" onclick="startGame()">
+                    ▶️ Start Quiz Battle
+                </button>
+            </div>
+
+            <!-- Playing Screen -->
+            <div id="playing" class="screen">
+                <div class="current-player" id="currentPlayerDisplay"></div>
+
+                <div class="progress-bar-container">
+                    <div class="progress-info">
+                        <span id="questionProgress">Question 1 of 5</span>
+                        <span id="rewardInfo">⭐ Reward: 100 pts + time bonus</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <div class="timer">
+                    <div class="timer-badge" id="timerBadge">
+                        🕐 <span id="timeLeft">15</span>s
+                    </div>
+                </div>
+
+                <div class="question" id="questionText"></div>
+
+                <div class="options" id="optionsContainer"></div>
+
+                <div class="scores">
+                    <h4>Live Scores</h4>
+                    <div class="scores-grid" id="scoresGrid"></div>
+                </div>
+            </div>
+
+            <!-- Results Screen -->
+            <div id="results" class="screen">
+                <div class="results-header">
+                    <div style="font-size: 5em;">🏆</div>
+                    <h2>Game Over!</h2>
+                    <p>Final Standings</p>
+                </div>
+
+                <div class="results-list" id="resultsList"></div>
+
+                <button class="play-again-btn" onclick="resetGame()">
+                    🔄 Play Again
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const availablePlayers = [
+            { id: 1, name: 'Player 1', avatar: '🎮' },
+            { id: 2, name: 'Gamer Pro', avatar: '🎯' },
+            { id: 3, name: 'Quiz Master', avatar: '🎪' },
+            { id: 4, name: 'Brain Box', avatar: '🧠' },
+            { id: 5, name: 'Speed Demon', avatar: '⚡' },
+            { id: 6, name: 'Smarty Pants', avatar: '🤓' },
+            { id: 7, name: 'The Thinker', avatar: '🎓' },
+            { id: 8, name: 'Quick Mind', avatar: '💡' },
+            { id: 9, name: 'Ace Player', avatar: '🌟' }
+        ];
+
+        const questions = [
+            {
+                question: "What is the capital of France?",
+                options: ["London", "Berlin", "Paris", "Madrid"],
+                correct: 2,
+                reward: 100,
+                timeLimit: 15
+            },
+            {
+                question: "Which planet is known as the Red Planet?",
+                options: ["Venus", "Mars", "Jupiter", "Saturn"],
+                correct: 1,
+                reward: 150,
+                timeLimit: 12
+            },
+            {
+                question: "What is 15 × 8?",
+                options: ["110", "120", "130", "140"],
+                correct: 1,
+                reward: 200,
+                timeLimit: 10
+            },
+            {
+                question: "Who painted the Mona Lisa?",
+                options: ["Van Gogh", "Picasso", "Da Vinci", "Monet"],
+                correct: 2,
+                reward: 250,
+                timeLimit: 15
+            },
+            {
+                question: "What is the largest ocean on Earth?",
+                options: ["Atlantic", "Indian", "Arctic", "Pacific"],
+                correct: 3,
+                reward: 100,
+                timeLimit: 12
+            }
+        ];
+
+        let players = [
+            { ...availablePlayers[0], score: 0 },
+            { ...availablePlayers[1], score: 0 },
+            { ...availablePlayers[2], score: 0 }
+        ];
+
+        let currentQuestion = 0;
+        let currentPlayerIndex = 0;
+        let timeLeft = 0;
+        let timerInterval = null;
+        let showingFeedback = false;
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function renderPlayers() {
+            const grid = document.getElementById('playersGrid');
+            grid.innerHTML = players.map((p, idx) => `
+                <div class="player-card" onclick="changePlayer(${idx})">
+                    <div class="avatar">${p.avatar}</div>
+                    <div class="name">${p.name}</div>
+                    <div class="status">Ready!</div>
+                    <div class="hint">Click to change →</div>
+                </div>
+            `).join('');
+        }
+
+        function changePlayer(idx) {
+            const usedIds = new Set(players.map(p => p.id));
+            const available = availablePlayers.filter(ap => !usedIds.has(ap.id) || ap.id === players[idx].id);
+            const currentIdx = available.findIndex(ap => ap.id === players[idx].id);
+            const nextIdx = (currentIdx + 1) % available.length;
+            players[idx] = { ...available[nextIdx], score: 0 };
+            renderPlayers();
+        }
+
+        function startGame() {
+            players = players.map(p => ({ ...p, score: 0 }));
+            currentQuestion = 0;
+            currentPlayerIndex = 0;
+            showingFeedback = false;
+            showScreen('playing');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQuestion];
+            timeLeft = q.timeLimit;
+            showingFeedback = false;
+
+            document.getElementById('questionProgress').textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
+            document.getElementById('rewardInfo').textContent = `⭐ Reward: ${q.reward} pts + time bonus`;
+            document.getElementById('progressFill').style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+            document.getElementById('questionText').textContent = q.question;
+            
+            const currentPlayer = players[currentPlayerIndex];
+            document.getElementById('currentPlayerDisplay').innerHTML = `
+                <div class="current-player-badge">
+                    <div class="avatar">${currentPlayer.avatar}</div>
+                    <div class="info">
+                        <div class="label">Now Playing</div>
+                        <div class="name">${currentPlayer.name}</div>
+                    </div>
+                </div>
+            `;
+
+            const optionsHTML = q.options.map((opt, idx) => 
+                `<button class="option-btn" onclick="handleAnswer(${idx})">${opt}</button>`
+            ).join('');
+            document.getElementById('optionsContainer').innerHTML = optionsHTML;
+
+            updateScores();
+            startTimer();
+        }
+
+        function startTimer() {
+            updateTimerDisplay();
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                if (showingFeedback) return;
+                
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleAnswer(null);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const badge = document.getElementById('timerBadge');
+            document.getElementById('timeLeft').textContent = timeLeft;
+            
+            if (timeLeft <= 5) {
+                badge.classList.add('warning');
+            } else {
+                badge.classList.remove('warning');
+            }
+        }
+
+        function handleAnswer(answerIdx) {
+            if (showingFeedback) return;
+            
+            showingFeedback = true;
+            clearInterval(timerInterval);
+
+            const q = questions[currentQuestion];
+            const isCorrect = answerIdx === q.correct;
+            
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach((btn, idx) => {
+                btn.disabled = true;
+                if (idx === q.correct) {
+                    btn.classList.add('correct');
+                } else if (idx === answerIdx) {
+                    btn.classList.add('wrong');
+                } else {
+                    btn.classList.add('disabled');
+                }
+            });
+
+            if (isCorrect) {
+                const timeBonus = Math.floor((timeLeft / q.timeLimit) * 50);
+                const totalReward = q.reward + timeBonus;
+                players[currentPlayerIndex].score += totalReward;
+            }
+
+            updateScores();
+
+            setTimeout(() => {
+                const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
+                const isRoundComplete = nextPlayerIndex === 0;
+                
+                if (currentQuestion < questions.length - 1 || !isRoundComplete) {
+                    currentPlayerIndex = nextPlayerIndex;
+                    if (isRoundComplete) {
+                        currentQuestion++;
+                    }
+                    loadQuestion();
+                } else {
+                    showResults();
+                }
+            }, 2000);
+        }
+
+        function updateScores() {
+            const grid = document.getElementById('scoresGrid');
+            grid.innerHTML = players.map((p, idx) => `
+                <div class="score-card ${idx === currentPlayerIndex ? 'active' : ''}">
+                    <div class="avatar">${p.avatar}</div>
+                    <div class="name">${p.name}</div>
+                    <div class="score">${p.score}</div>
+                    ${idx === currentPlayerIndex ? '<div class="playing-indicator">● Playing</div>' : ''}
+                </div>
+            `).join('');
+        }
+
+        function showResults() {
+            showScreen('results');
+            const sorted = [...players].sort((a, b) => b.score - a.score);
+            
+            const classes = ['first', 'second', 'third'];
+            const emojis = ['🥇', '🥈', '🥉'];
+            
+            const html = sorted.map((p, idx) => `
+                <div class="result-card ${classes[idx]}">
+                    <div class="rank">#${idx + 1}</div>
+                    <div class="avatar">${p.avatar}</div>
+                    <div class="info">
+                        <div class="name">${p.name}</div>
+                        ${idx === 0 ? '<div class="badge">🏆 Winner!</div>' : ''}
+                    </div>
+                    <div class="score-result">
+                        <div class="points">${p.score}</div>
+                        <div class="label">points</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('resultsList').innerHTML = html;
+        }
+
+        function resetGame() {
+            showScreen('lobby');
+            renderPlayers();
+        }
+
+        // Initialize
+        renderPlayers();
+    </script>
+</body>
+</html>
